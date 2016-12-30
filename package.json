@@ -1,0 +1,25 @@
+{
+  "name": "lotto",
+  "version": "1.0.0",
+  "description": "lotto",
+  "main": "lotto.js",
+  "scripts": {
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JSoon/lotto.git"
+  },
+  "keywords": [
+    "lotto"
+  ],
+  "author": "J.Soon",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JSoon/lotto/issues"
+  },
+  "homepage": "https://github.com/JSoon/lotto#readme",
+  "dependencies": {
+    "bezier-easing": "^2.0.3"
+  }
+}
