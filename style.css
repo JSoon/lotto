@@ -2,7 +2,10 @@ body {
     padding-top: 50px;
     text-align: center;
 }
-h1 {
+#process {
     font-size: 100px;
     color: #81D4FA;
+}
+#results {
+    color: #607D8B;
 }

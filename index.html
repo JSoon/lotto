@@ -10,20 +10,35 @@
 <body>
     <button id="start" type="button">start</button>
     <button id="stop" type="button">stop</button>
-    <h1 id="result"></h1>
+    <h1 id="process"></h1>
+    <div id="results"></div>
     <script src="node_modules/bezier-easing/dist/bezier-easing.js"></script>
     <script src="lotto.js"></script>
     <script>
-        var easing = BezierEasing(0, 0, 0.58, 1);
+        // var easing = BezierEasing(0, 0, 0.58, 1);
         // easing allows to project x in [0.0,1.0] range onto the bezier-curve defined by the 4 points (see schema below).
         // console.log(easing(0.0)); // 0.0
         // console.log(easing(0.5)); // 0.3125
         // console.log(easing(1.0)); // 1.0
 
         var lo = lotto({
-            number: 100,
+            number: 5,
             interval: 500,
-            step: 0.5
+            step: 0.5,
+            processing: function (bingo) {
+                document.getElementById('process').innerHTML = bingo.participant;
+                document.getElementById('start').disabled = true;
+                document.getElementById('stop').disabled = false;
+            },
+            success: function (bingo, leftP) {
+                var newBingo = document.createElement('h2');
+                newBingo.innerHTML = bingo.participant;
+                document.getElementById('results').appendChild(newBingo);
+                if (leftP.length) {
+                    document.getElementById('start').disabled = false;
+                }
+                document.getElementById('stop').disabled = true;
+            }
         });
         document.getElementById('start').onclick = function () {
             console.log('start raffle!');
