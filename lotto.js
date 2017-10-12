@@ -184,8 +184,9 @@
          * raffling
          * Raffling timer
          * @param {string} type - raffling type
+         * @param {function} cb - raffling stop callback
          */
-        var raffling = function (type) {
+        var raffling = function (type, cb) {
             intervalTemp = calcInterval(type);
             // console.log(intervalTemp);
 
@@ -196,6 +197,7 @@
                     raffling(type);
                 } else {
                     resetTimer(true);
+                    typeof cb === 'function' && cb();
                 }
             }, intervalTemp);
         };
@@ -205,9 +207,10 @@
          * Raffling processing to control raffling animation
          * @param {function} callback - raffling function
          * @param {string} type - raffling type
+         * @param {function} cb - raffling stop callback
          */
-        var raffleEase = function (callback, type) {
-            callback(type);
+        var raffleEase = function (callback, type, cb) {
+            callback(type, cb);
         };
 
         // Start raffle
@@ -224,11 +227,14 @@
             }
         };
 
-        // Stop raffle
-        var raffleStop = function () {
+        /**
+         * Stop raffle
+         * @param {function} cb - raffling stop callback
+         */
+        var raffleStop = function (cb) {
             if (timer !== undefined && !clickStopFlag && intervalTemp === intervalMin) {
                 resetTimer();
-                raffleEase(raffling, 'easeOut');
+                raffleEase(raffling, 'easeOut', cb);
             }
         };
 
