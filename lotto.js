@@ -1,43 +1,70 @@
+/**
+ * 抽奖器
+ * 
+ * @description 从一组抽奖数据中，每次抽取一个中奖数据
+ * @author J.Soon <serdeemail@gmail.com>
+ */
 (function (root, factory) {
+    // 组件名称
+    var comPrefix = 'com_'; // 前缀
+    var comName = 'lotto'; // 名称
+    var globalName = comPrefix + comName; // 全局名称
+
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define([], function () {
+        define(['bezier-easing'], function (BezierEasing) {
             // Also create a global in case some scripts
             // that are loaded still are looking for
             // a global even when an AMD loader is in use.
-            return (root.lotto = factory());
+            return (root.lotto = factory(BezierEasing));
         });
     } else {
         // Browser globals
-        root.lotto = factory();
+        var BezierEasing = root['BezierEasing'];
+        root[globalName] = factory(BezierEasing);
     }
-} (typeof window !== "undefined" ? window : this, function () {
+}(typeof window !== "undefined" ? window : this, function (BezierEasing) {
     // Lotto functional constructor
+    /**
+     * 抽奖器
+     * 
+     * @param   {object}      cfg               抽奖参数
+     * @param   {object[]}    cfg.participants  抽奖者对象数组
+     * @param   {number}      cfg.interval      抽奖定时器间隔时间
+     * @param   {number}      cfg.step          贝塞尔曲线的x轴的值，x的定义域为x∈[0,1]，用于计算渐进渐出的interval的值
+     * @param   {number}      cfg.transition    抽奖定时器过渡动画类型，1：渐进渐出ease-in-out，2：匀速linear，默认1
+     * @param   {function}    cfg.processing    抽奖中回调函数
+     * @param   {function}    cfg.success       抽奖结束回调函数
+     */
     var lotto = function () {
         /******************************************************************
          * ATTRIBUTES
          *****************************************************************/
         var that = {}; // new object
         var cfg = arguments[0] || {}; // config
-        var number = cfg.number || 0; // number of participants
-        var allP = [] // all participants
-        // Init allP
-        for (var i = 0; i < number; i += 1) {
+        var participants = cfg.participants || []; // participants
+        var allP = []; // all participants
+        var leftP = []; // left participants equals to allP in the beginning
+        // Init allP & leftP
+        for (var i = 0; i < participants.length; i += 1) {
             // Participant struct
             allP.push({
                 id: i,
-                participant: i
+                participant: participants[i]
+            });
+            leftP.push({
+                id: i,
+                participant: participants[i]
             });
         }
         var chosenP = []; // chosen participants
-        var leftP = allP.slice(); // shallow copy left participants, equaling to allP in the beginning
         var bingoTemp; // the temp chosen one in the raffling
         var curP; // current random participant
         var prevP; // previous random participant
         var timer; // timer of the raffle
         var interval = cfg.interval || 1000; // init interval of the timer
         if (interval <= 70) {
-            throw new Error('The interval must be greater than or equal to 70ms');
+            throw new Error('The interval must greater than or equals to 70ms');
         }
         var intervalTemp = interval;
         var intervalMin = 70;
@@ -50,6 +77,7 @@
         } else if (cfg.step === 0) {
             axisStep = 0;
         }
+        var transition = cfg.transition || 1;
         var clickStartFlag = false; // if start button being clicked
         var clickStopFlag = false; // if stop button being clicked
         // Events
@@ -58,14 +86,14 @@
          * callback
          * @param {object} bingo - the bingo participant
          */
-        var processing = cfg.processing || function (bingo) { }; // processing of raffle
+        var processing = cfg.processing || function (bingo) {}; // processing of raffle
         /**
          * success
          * callback
          * @param {object} bingo - the bingo participant
          * @param {array} leftP - the left participants
          */
-        var success = cfg.success || function (bingo, leftP) { }; // bingo of raffle
+        var success = cfg.success || function (bingo, leftP) {}; // bingo of raffle
 
 
         /******************************************************************
@@ -155,7 +183,6 @@
                         clickStartFlag = true;
                     }
                     return intervalTemp;
-                    break;
                 case 'easeOut':
                     // First time to click stop raffling won't calculate the intervalTemp
                     if (clickStopFlag) {
@@ -173,10 +200,8 @@
                         axisXTemp += axisStep; // to avoid axisXTemp = 0, which will make intervalTemp = 0
                     }
                     return intervalTemp;
-                    break;
                 default:
                     return intervalTemp;
-                    break;
             }
         };
 
@@ -222,7 +247,14 @@
                     processing(bingoTemp);
                 }
                 if (timer === undefined) {
-                    raffleEase(raffling, 'easeIn');
+                    switch (transition) {
+                        case 2:
+                            raffleEase(raffling, 'linear');
+                            break;
+                        default:
+                            raffleEase(raffling, 'easeIn');
+                            break;
+                    }
                 }
             }
         };
@@ -232,9 +264,19 @@
          * @param {function} cb - raffling stop callback
          */
         var raffleStop = function (cb) {
-            if (timer !== undefined && !clickStopFlag && intervalTemp === intervalMin) {
-                resetTimer();
-                raffleEase(raffling, 'easeOut', cb);
+            // debugger;
+            // if (timer !== undefined && !clickStopFlag && intervalTemp === intervalMin) {
+            if (timer !== undefined && !clickStopFlag) {
+                switch (transition) {
+                    case 2:
+                        resetTimer(true);
+                        // raffleEase(raffling, 'linear', cb);
+                        break;
+                    default:
+                        resetTimer();
+                        raffleEase(raffling, 'easeOut', cb);
+                        break;
+                }
             }
         };
 
