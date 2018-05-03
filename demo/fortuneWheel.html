@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>幸运之轮</title>
+</head>
+
+<body>
+    <!-- <img id="J_FortuneWheel" src="../img/clock.png" alt="幸运之轮"> -->
+
+    <canvas id="J_FortuneWheel" width="512" height="512"></canvas>
+
+    <button id="J_Go" type="button" data-state="0">开始</button>
+
+    <!-- <script>
+        var start = null;
+        var element = document.getElementById('J_Go');
+        element.style.position = 'absolute';
+
+        function step(timestamp) {
+            if (!start) start = timestamp;
+            var progress = timestamp - start;
+            element.style.left = Math.min(progress / 10, 200) + 'px';
+            if (progress < 2000) {
+                window.requestAnimationFrame(step);
+            }
+        }
+
+        window.requestAnimationFrame(step);
+    </script> -->
+
+    <script src="../js/fortuneWheel.js"></script>
+    <script>
+        var fortuneWheel = window.com_fortuneWheel();
+        document.getElementById('J_Go').onclick = function () {
+            var state = this.getAttribute('data-state');
+            // 未开始
+            if (state === '0') {
+                fortuneWheel.begin();
+                this.setAttribute('data-state', '1');
+                this.innerHTML = '停止';
+            }
+            // 已开始
+            else if (state === '1') {
+                fortuneWheel.stop();
+                this.setAttribute('data-state', '0');
+                this.innerHTML = '开始';
+            }
+        };
+    </script>
+</body>
+
+</html>

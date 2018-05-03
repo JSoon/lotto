@@ -16,7 +16,7 @@
             // Also create a global in case some scripts
             // that are loaded still are looking for
             // a global even when an AMD loader is in use.
-            return (root.lotto = factory(BezierEasing));
+            return (root[globalName] = factory(BezierEasing));
         });
     } else {
         // Browser globals
