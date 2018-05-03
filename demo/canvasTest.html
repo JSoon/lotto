@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        body {
+            text-align: center;
+        }
+
+        canvas {
+            background: #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="J_MyCanvas" width="500" height="400">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <br>
+    <button id="J_Begin">开始</button>
+    <button id="J_Stop" disabled>结束</button>
+
+    <script>
+        /**
+         * Fisher–Yates shuffle
+         * 
+         * https://blog.oldj.net/2017/01/23/shuffle-an-array-in-javascript/
+         * https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
+         * https://github.com/lodash/lodash/blob/b0980a90fc83bc92e040f905ebed8196f895949c/.internal/shuffleSelf.js
+         * @param {array} array 
+         */
+        var shuffle = function (array) {
+            var counter = array.length;
+
+            // While there are elements in the array
+            while (counter > 0) {
+                // Pick a random index
+                var index = Math.floor(Math.random() * counter);
+
+                // Decrease counter by 1
+                counter--;
+
+                // And swap the last element with it
+                var temp = array[counter];
+                array[counter] = array[index];
+                array[index] = temp;
+            }
+
+            return array;
+        };
+    </script>
+    <script>
+        var beginButton = document.getElementById('J_Begin');
+        var stopButton = document.getElementById('J_Stop');
+        var myCanvas = document.getElementById('J_MyCanvas');
+        var cWidth = 500; // 画布宽度
+        var cHeight = 400; // 画布高度
+        var imgWidth = 400; // 转盘图片宽度
+        var imgHeight = 400; // 转盘图片高度
+        var ctx = myCanvas.getContext('2d'); // 画布2D对象
+        var wheelLoaded = false; // 转盘图片加载标识
+        var unitRadian = Math.PI / 180; // 单位弧度
+        var curRadian = 0; // 当前旋转弧度
+        var myAnimation; // 旋转动画编号，由requestAnimationFrame返回
+        var stopFlag = false; // 停止旋转标识
+        var targetRadian; // 目标弧度
+        var buffer = 0; // 停止旋转缓冲圈数（即点击停止后，多转圈数）
+        var bufferMax = 3; // 最大缓冲圈数
+
+        var wheelImg = new Image();
+        wheelImg.src = '../img/bmw_logo_PNG19714.png';
+        wheelImg.onload = function () {
+            wheelLoaded = true;
+            // https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Transformations
+            // 1. 保存当前画布状态
+            ctx.save();
+            // 2. 平移画布，使画布原点沿x，y轴分别移动画布宽高的50%
+            ctx.translate(cWidth / 2, cHeight / 2);
+            // 3. 旋转画布弧度
+            ctx.rotate(curRadian);
+            // 4. 在画布中绘图，图片的原点沿平移后画布原点x，y轴分别移动图片宽高的50%
+            // 此时，图片的中心点刚好位于画布原点处，则实现了当画布旋转时，图片也沿图片中心点旋转的效果
+            ctx.drawImage(wheelImg, -imgWidth / 2, -imgHeight / 2, imgWidth, imgHeight);
+            // 5. 恢复画布状态转变前的状态（例如translate动画，fillStyle属性变化，以及clipping path等操作）
+            // 在一般情况下，在转变后，都应当进行恢复操作，避免转变后的状态进入状态栈，从而影响后续绘制操作
+            ctx.restore();
+        };
+
+        function rolling() {
+            ctx.clearRect(0, 0, cWidth, cHeight);
+            ctx.save();
+
+            ctx.translate(cWidth / 2, cHeight / 2);
+            ctx.rotate(curRadian);
+            ctx.drawImage(wheelImg, -imgWidth / 2, -imgHeight / 2, imgWidth, imgHeight);
+
+            curRadian += unitRadian * 10;
+
+            // 这里仅进行一圈旋转，之后则重置当前弧度，避免多次计算产生的舍入误差，导致出现动画不精确
+            if (curRadian > unitRadian * 360) {
+                curRadian = 0;
+                // 收到停止信号时，缓冲圈数才开始计数
+                if (stopFlag) {
+                    buffer += 1;
+                    console.log('缓冲圈数：', buffer);
+                }
+            }
+
+            // 收到停止信号时，再旋转指定圈数，之后旋转至目标弧度后，停止旋转动画
+            if (stopFlag && buffer === bufferMax) {
+                if (curRadian >= targetRadian) {
+                    console.log('旋转至目标角度：', Math.round(targetRadian / unitRadian) + '°');
+                    buffer = 0;
+                    ctx.restore();
+                    window.cancelAnimationFrame(myAnimation);
+                    return;
+                }
+            }
+
+            // console.log(curRadian);
+
+            ctx.restore();
+            myAnimation = window.requestAnimationFrame(rolling);
+        }
+
+        beginButton.onclick = function () {
+            beginButton.setAttribute('disabled', 'disabled');
+            stopButton.removeAttribute('disabled');
+            if (wheelLoaded) {
+                stopFlag = false;
+                // 测试用随机弧度
+                var testRadians = [0, 60, 120, 180, 240];
+                // targetRadian = unitRadian * testRadians[Math.round(Math.random() * 4)];
+                targetRadian = unitRadian * window.shuffle(testRadians)[0];
+                rolling();
+            }
+        };
+
+        stopButton.onclick = function () {
+            stopButton.setAttribute('disabled', 'disabled');
+            beginButton.removeAttribute('disabled');
+            stopFlag = true;
+        };
+    </script>
+</body>
+
+</html>
